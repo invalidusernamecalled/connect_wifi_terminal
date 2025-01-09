@@ -80,6 +80,11 @@ echo Guid==%guid_dir%
 echo:GETTING PROFILE FILE...
 powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $directoryPath -Filter \"*.xml\";foreach ($xmlFile in $xmlFiles) {  [xml]$xmlContent = Get-Content $xmlFile.FullName;$ssidName = $xmlContent.WLANProfile.SSIDConfig.SSID.name; $profileName = $xmlContent.WLANProfile.name; if ($ssidName -eq \"!ssid_choice_without_qoute!\") { Write-Host \"$profileName\" } };">wifi_sign_profile_name.txt
 
+
+set profile_exist=0
+for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do set profile_exist=1
+if !profile_exist! == 0 echo No Profile Exists for this interface.& echo: & pause >NUL & goto start
+
 for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do echo netsh wlan connect name=%%i ssid=!ssid_[%choice%]! interface="!interfacename!" & netsh wlan connect name=%%i ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL
 
 
