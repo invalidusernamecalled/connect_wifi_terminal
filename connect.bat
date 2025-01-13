@@ -4,7 +4,7 @@ set networks=0
 for /f "tokens=1,2 delims=:" %%i in ('netsh wlan show interfaces ^| findstr /iR "Name GUID"') do (
 set temp_name=%%i
 set temp_name=!temp_name: =!
-if /i "!temp_name!"=="Name" set /a networks+=1&for /f "tokens=* delims= " %%s in ("%%j") do set name_[!networks!]=%%s
+if /i "!temp_name!"=="Name" set /a networks+=1&for /f "tokens=* delims= " %%s in ("%%j") do set "name_[!networks!]=%%s"
 set guid_[!networks!]=
 if /i "!temp_name!"=="GUID" for /f "tokens=* delims= " %%d in ("%%j") do set guid_[!networks!]=%%d
 )
@@ -74,7 +74,7 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     if !skip! GTR 0 for /f "skip=%skip% tokens=1,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R') do echo:if "%%~j"=="!ssid_connected!"&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~j"&set signal_strength_[!counter!]=%%i&if "%%~j"=="!ssid_connected!" (echo !counter!^) %%~j*, %%i) else (echo !counter!^) %%~j, %%i)
     :next
     set /a skip=skip+9
-    call :colors black red "x) Disconnect"
+    call :colors black red "x^) Disconnect"
     echo:
     if %list_empty%==0 echo Select 1-9   
     choice /c %choice_list%YXR /n /m "Or Press Y for (next page),(R) for refresh"    
@@ -111,7 +111,7 @@ for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do echo netsh wlan connect
 
 
 if %errorlevel% NEQ 0 (for /l %%i in (0,1,5) do echo:) & echo:netsh wlan connect name=!ssid_[%choice%]! interface="!interfacename!" & echo:RAN ERROR [code:%errorlevel%] & if "!ssid_[%choice%]!"=="" call :colors black cyan "Invalid empty Wi-fi name selected" & pause >NUL & goto :start
-if %errorlevel%==0 (echo: & call :colors black cyan "Done!") else (echo: RAN ERROR & goto :nekst)
+if %errorlevel%==0 (echo: & call :colors black cyan "Done") else (echo: RAN ERROR & goto :nekst)
 echo:
 set disconnect_times=0
 :END
@@ -141,9 +141,9 @@ for /f "tokens=2 delims=:" %%i in ('netsh interface ip show config "!interfacena
 if "%pingable-gateway%"=="" (echo NO GATEWAY FOUND:) else (echo pinging GATEWAY....&ping %pingable-gateway%  -S %found_ip_address%  | find /i "ttl")
 echo:------------------
 echo pinging GOOGLE
-ping -n 3 8.8.8.8 -S %found_ip_address% | find /i "ttl"&&call :colors black magenta ">       Hip Hip Hurray        <" || (call :colors white purple "Nope Nop It's time to be a Purple head again!"&goto :start)
+ping -n 3 8.8.8.8 -S %found_ip_address% | find /i "ttl"&&(call :colors black magenta "^>       Hip Hip Hurray        "& PAUSE >NUL) || (call :colors white blue "Nope Nop It's time to be a Purple head again ^!"&PAUSE >NUL &goto :start)
 timeout 20 >NUL
-goto :eof
+goto :start
 :colors
 
 Set Black1=[40m
@@ -254,7 +254,7 @@ for /f "delims=" %%I in ("!default_pfname!") do (echo:%%I)>>details_wifi_export_
 for /f "delims=" %%I in ("!ssid_choice_without_qoute!") do (echo:%%I)>>details_wifi_export_00223912.txt
 (echo:!authentication_write!)>>details_wifi_export_00223912.txt
 (echo:!encryption_write!)>>details_wifi_export_00223912.txt
-echo:Created Base file for use with Powershell.
+echo:Created Base file for use with Powershell. Press key
 pause >NUL
 powershell -c "$filePath = \"details_wifi_export_00223912.txt\";$profile_name = Get-Content -Path $filePath | Select-Object -First 1;$ssid = Get-Content -Path $filePath | Select-Object -Skip 1 | Select-Object -First 1;$authentication = Get-Content -Path $filePath | Select-Object -Skip 2 | Select-Object -First 1;$encryption = Get-Content -Path $filePath | Select-Object -Skip 3 | Select-Object -First 1;$passphrase = Read-Host -Prompt \"Enter the Wi-Fi passphrase\" -AsSecureString;$fileName=[System.IO.Path]::GetRandomFileName().Substring(0, 10);$xmlFilePath = \"%tmp%\$fileName.xml\";$plainPassphrase = [System.Net.NetworkCredential]::new(\"\", $passphrase).Password;$xmlContent = \"^<WLANProfile xmlns=`\"http://www.microsoft.com/networking/WLAN/profile/v1"`\"><name>$profile_name</name><SSIDConfig><SSID><name>$ssid</name></SSID></SSIDConfig><connectionType>ESS</connectionType><connectionMode>manual</connectionMode><MSM><security><authEncryption><authentication>$authentication</authentication><encryption>$encryption</encryption><useOneX>false</useOneX></authEncryption><sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>$plainPassphrase</keyMaterial></sharedKey></security></MSM></WLANProfile>\";$xmlContent ^| Out-File -FilePath $xmlFilePath -Encoding UTF8;write-host $xmlFilePath;netsh wlan add profile filename=\"$xmlFilePath\";if ($LASTEXITCODE -eq 0) { write-host \"profile export success.\" } else { write-host \"error during export.\" };Remove-Item -Path $xmlFilePath;write-host -foregroundcolor Green \"profile done.\""
 del details_wifi_export_00223912.txt
