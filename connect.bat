@@ -1,4 +1,6 @@
-@echo off 
+@echo off
+cmd /c "taskkill /fi "WINDOWTITLE eq xCsjKslaOp66666*""&&echo:DONE
+title xCsjKslaOp66666
 setlocal enabledelayedexpansion
 set networks=0
 for /f "tokens=1,2 delims=:" %%i in ('netsh wlan show interfaces ^| findstr /iR "Name GUID"') do (
@@ -65,13 +67,14 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     :print_info
     set skip=0
     set /a displaycurtain=networks
+    set corecount=9
     :repat
     set /a displaycurtain=displaycurtain-9
     set /a escape=0 
     if !displaycurtain! LEQ 0 set escape=1
     set counter=0
     if !skip!==0 for /f "tokens=1,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~j"&set signal_strength_[!counter!]=%%i&if "%%~j"=="!ssid_connected!" (echo !counter!^) %%~j*, %%i) else (echo !counter!^) %%~j, %%i)
-    if !skip! GTR 0 for /f "skip=%skip% tokens=1,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R') do echo:if "%%~j"=="!ssid_connected!"&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~j"&set signal_strength_[!counter!]=%%i&if "%%~j"=="!ssid_connected!" (echo !counter!^) %%~j*, %%i) else (echo !counter!^) %%~j, %%i)
+    if !skip! GTR 0 echo here %skip% !skip! Skip&for /f "skip=%skip% tokens=1,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~j"&set signal_strength_[!counter!]=%%i&if "%%~j"=="!ssid_connected!" (echo !corecount!^)^(!counter!^) %%~j*, %%i) else (echo !corecount!^)^(!counter!^) %%~j, %%i)
     :next
     set /a skip=skip+9
     call :colors black red "x^) Disconnect"
@@ -82,7 +85,7 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     if %list_empty%==1 if %choice%==2 netsh wlan disconnect interface="!interfacename!" &  goto :start
     if %list_empty%==1 if %choice%==3 echo refreshing ..&timeout 2 >NUL& start cmd /c "call %~fp0" & goto :eof
     if %list_empty%==1 goto :start
-    if !choice!==10 if !escape!==0 (call :display_first_line & goto repat) else (set /a skip=0 & call :display_first_line & goto repat)
+    if !choice!==10 if !escape!==0 (call :display_first_line & goto repat) else (set /a skip=0 &set corecount=9 & call :display_first_line & goto repat)
     echo:
     if %choice%==11 call :disconnect & pause >NUL & goto :start
     if %choice%==12 echo refreshing ..&timeout 2 >NUL& start cmd /c "call %~fp0" & goto :eof
