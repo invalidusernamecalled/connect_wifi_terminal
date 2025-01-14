@@ -15,6 +15,7 @@ set total_network=!networks!
 :start
 call :display_first_line
 echo:Total network interfaces found:%total_network%
+echo:
 for /l %%a in (1,1,!networks!) do if "!name_[%%a]!"=="!interfacename!" set real_guid=!guid_[%%a]!
 set /a all_ears=0
 set ssid_connected=
@@ -198,11 +199,10 @@ cls
     netsh wlan show networks 1>NUL 2>NUL
     if %errorlevel% NEQ 0 echo:&call :colors white red "Check"&echo|set/p=..Wifi is Switched On.&call :colors green black " Network scanning error code: [%errorlevel%]. Try again"&echo:&netsh wlan show interfaces | findstr /ic:"hardware on" /ic:"hardware off" /ic:"software on" /ic:"software off" /irc:"Name *[:]"
 
-    echo:
-    echo:
+
     call :colors black cyan "Pick a network"
     echo:
-    echo:
+
 goto :eof
 
 :no_profile_exists
