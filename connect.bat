@@ -206,7 +206,7 @@ cls
 goto :eof
 
 :no_profile_exists
-echo No Profile Exists for this interface ^& ssid.
+echo No Profile Exists for this ssid.
 choice /m "Would u like to create it?"
 if %errorlevel%==2 goto start
 :create_wlan_profile
@@ -248,6 +248,12 @@ for %%a in (%encrypt_methods%) do set /a encryptfound+=1&if /i "%%a"=="!encrypti
 set counter=0
 for %%a in (%encrypt_value%) do set /a counter+=1&if !counter!==!val! set encryption_write=%%a
 if !encryptfound! NEQ 0 echo:No encryption found&call :no_encrypt
+
+echo|set/p=xxxx|choice /c 0 /d 0 /t 2 1>NUL 2>NUL
+choice /c AM /m "Choose mode:Auto|Manual:" /d M /t 3
+if %errorlevel%==2 (set mode=manual) else (set mode=auto)
+echo:Chosen !mode!
+
 echo:disclaimer:In built input method isn't completely SECURE
 echo:Would u enter password now?   You can enter password using GUI
 choice /m "Press N to Skip"
@@ -257,13 +263,24 @@ for /f "delims=" %%I in ("!default_pfname!") do (echo:%%I)>>details_wifi_export_
 for /f "delims=" %%I in ("!ssid_choice_without_qoute!") do (echo:%%I)>>details_wifi_export_00223912.txt
 (echo:!authentication_write!)>>details_wifi_export_00223912.txt
 (echo:!encryption_write!)>>details_wifi_export_00223912.txt
+(echo:!mode!)>>details_wifi_export_00223912.txt
 echo:Created Base file for use with Powershell. Press key
 pause >NUL
-powershell -c "$filePath = \"details_wifi_export_00223912.txt\";$profile_name = Get-Content -Path $filePath | Select-Object -First 1;$ssid = Get-Content -Path $filePath | Select-Object -Skip 1 | Select-Object -First 1;$authentication = Get-Content -Path $filePath | Select-Object -Skip 2 | Select-Object -First 1;$encryption = Get-Content -Path $filePath | Select-Object -Skip 3 | Select-Object -First 1;$passphrase = Read-Host -Prompt \"Enter the Wi-Fi passphrase\" -AsSecureString;$fileName=[System.IO.Path]::GetRandomFileName().Substring(0, 10);$xmlFilePath = \"%tmp%\$fileName.xml\";$plainPassphrase = [System.Net.NetworkCredential]::new(\"\", $passphrase).Password;$xmlContent = \"^<WLANProfile xmlns=`\"http://www.microsoft.com/networking/WLAN/profile/v1"`\"><name>$profile_name</name><SSIDConfig><SSID><name>$ssid</name></SSID></SSIDConfig><connectionType>ESS</connectionType><connectionMode>manual</connectionMode><MSM><security><authEncryption><authentication>$authentication</authentication><encryption>$encryption</encryption><useOneX>false</useOneX></authEncryption><sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>$plainPassphrase</keyMaterial></sharedKey></security></MSM></WLANProfile>\";$xmlContent ^| Out-File -FilePath $xmlFilePath -Encoding UTF8;write-host $xmlFilePath;netsh wlan add profile filename=\"$xmlFilePath\";if ($LASTEXITCODE -eq 0) { write-host \"profile export success.\" } else { write-host \"error during export.\" };Remove-Item -Path $xmlFilePath;write-host -foregroundcolor Green \"profile done.\""
+if "!authentication_write!"=="WPA2PSK" goto wpa2-powershell
+powershell -c "$filePath = \"details_wifi_export_00223912.txt\";$profile_name = Get-Content -Path $filePath | Select-Object -First 1;$ssid = Get-Content -Path $filePath | Select-Object -Skip 1 | Select-Object -First 1;$authentication = Get-Content -Path $filePath | Select-Object -Skip 2 | Select-Object -First 1;$encryption = Get-Content -Path $filePath | Select-Object -Skip 3 | Select-Object -First 1;$connectionMode = Get-Content -Path $filePath | Select-Object -Skip 4 | Select-Object -First 1;$passphrase = Read-Host -Prompt \"Enter the Wi-Fi passphrase\" -AsSecureString;$fileName=[System.IO.Path]::GetRandomFileName().Substring(0, 10);$xmlFilePath = \"%tmp%\$fileName.xml\";$plainPassphrase = [System.Net.NetworkCredential]::new(\"\", $passphrase).Password;$xmlContent = \"^<WLANProfile xmlns=`\"http://www.microsoft.com/networking/WLAN/profile/v1"`\"><name>$profile_name</name><SSIDConfig><SSID><name>$ssid</name></SSID></SSIDConfig><connectionType>ESS</connectionType><connectionMode>$connectionMode</connectionMode><MSM><security><authEncryption><authentication>$authentication</authentication><encryption>$encryption</encryption><useOneX>false</useOneX></authEncryption><sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>$plainPassphrase</keyMaterial></sharedKey></security></MSM></WLANProfile>\";$xmlContent ^| Out-File -FilePath $xmlFilePath -Encoding UTF8;write-host $xmlFilePath;netsh wlan add profile filename=\"$xmlFilePath\";if ($LASTEXITCODE -eq 0) { write-host \"profile export success.\" } else { write-host \"error during export.\" };Remove-Item -Path $xmlFilePath;write-host -foregroundcolor Green \"profile done.\""
 del details_wifi_export_00223912.txt
 echo:Connecting with Wi-fi
 netsh wlan connect name="!default_pfname!" ssid="!ssid_choice_without_qoute!" interface="!interfacename!"
 if %errorlevel%==0 (echo Success) else (echo Error connecting)
+timeout 10 >NUL
+goto :eof
+:wpa2-powershell
+powershell -c "$filePath = \"details_wifi_export_00223912.txt\";$profile_name = Get-Content -Path $filePath | Select-Object -First 1;$ssid = Get-Content -Path $filePath | Select-Object -Skip 1 | Select-Object -First 1;$authentication = Get-Content -Path $filePath | Select-Object -Skip 2 | Select-Object -First 1;$encryption = Get-Content -Path $filePath | Select-Object -Skip 3 | Select-Object -First 1;$connectionMode = Get-Content -Path $filePath | Select-Object -Skip 4 | Select-Object -First 1;$passphrase = Read-Host -Prompt \"Enter the Wi-Fi passphrase\" -AsSecureString;$fileName=[System.IO.Path]::GetRandomFileName().Substring(0, 10);$xmlFilePath = \"%tmp%\$fileName.xml\";$plainPassphrase = [System.Net.NetworkCredential]::new(\"\", $passphrase).Password;$xmlContent = \"^<WLANProfile xmlns=`\"http://www.microsoft.com/networking/WLAN/profile/v1"`\"><name>$profile_name</name><SSIDConfig><SSID><name>$ssid</name></SSID></SSIDConfig><connectionType>ESS</connectionType><connectionMode>$connectionMode</connectionMode><MSM><security><authEncryption><authentication>$authentication</authentication><encryption>$encryption</encryption><useOneX>false</useOneX></authEncryption><sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>$plainPassphrase</keyMaterial></sharedKey><PMKCacheMode>enabled</PMKCacheMode><PMKCacheTTL>240</PMKCacheTTL><PMKCacheSize>20</PMKCacheSize></security></MSM></WLANProfile>\";$xmlContent ^| Out-File -FilePath $xmlFilePath -Encoding UTF8;write-host $xmlFilePath;netsh wlan add profile filename=\"$xmlFilePath\";if ($LASTEXITCODE -eq 0) { write-host \"profile export success.\" } else { write-host \"error during export.\" };Remove-Item -Path $xmlFilePath;write-host -foregroundcolor Green \"profile done.\""
+del details_wifi_export_00223912.txt
+echo:Connecting with Wi-fi
+netsh wlan connect name="!default_pfname!" ssid="!ssid_choice_without_qoute!" interface="!interfacename!"
+if %errorlevel%==0 (echo Success) else (echo Error connecting)
+timeout 10 >NUL
 goto :eof
 
 
