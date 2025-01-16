@@ -2,6 +2,7 @@
 cmd /c "taskkill /fi "WINDOWTITLE eq xCsjKslaOp66666*""&&echo:DONE
 title xCsjKslaOp66666
 setlocal enabledelayedexpansion
+for /f "delims=" %%i in ('powershell -c "write-host -nonewline `t"') do set "tab=%%i"
 set networks=0
 for /f "tokens=1,2 delims=:" %%i in ('netsh wlan show interfaces ^| findstr /iR "Name GUID"') do (
 set temp_name=%%i
@@ -82,14 +83,16 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     set /a escape=0 
     if !displaycurtain! LEQ 0 set escape=1
     set counter=0
-    if !skip!==0 for /f "tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN signal:%%i        bssids:%%j) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !counter!^) %%~k* signal:%%i        bssids:%%j) else (if "%%~k" NEQ "" echo !counter!^) %%~k signal:%%i        bssids:%%j)
-    if !skip! GTR 0 echo here %skip% !skip! Skip&for /f "skip=%skip% tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN signal:%%i        bssids:%%j ) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k* signal:%%i        bssids:%%j) else (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k signal:%%i        bssids:%%j)
+    
+    if !skip!==0 for /f "tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
+    
+    if !skip! GTR 0 echo here %skip% !skip! Skip&for /f "skip=%skip% tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j ) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
     :next
     set /a skip=skip+9
     call :colors black red "x^) Disconnect"
-    echo: r^) re-connect
+    echo: D^) re-connect
     if %list_empty%==0 echo Select 1-9   
-    choice /c %choice_list%YXLr /n /m "Or Press Y for (next page),(L) for refresh"    
+    choice /c %choice_list%YXRD /n /m "Or Press Y for (next page),(R) for list refresh"    
     set choice=%errorlevel%
     if %list_empty%==1 if %choice%==2 netsh wlan disconnect interface="!interfacename!" &  goto :start
     if %list_empty%==1 if %choice%==3 echo refreshing ..&timeout 2 >NUL& start cmd /c "call %~fp0" & goto :eof
@@ -187,7 +190,7 @@ REM powershell -c "write-host -nonewline -backgroundcolor %first% -foregroundcol
 goto :eof
 :display_first_line
 cls
-    if defined interfacename if "!interfacename!" NEQ "" echo interface ^<!interfacename!^> & echo: & goto picknext
+    if defined interfacename if "!interfacename!" NEQ "" echo interface ^<!interfacename!^>%tab%%tab%%tab%%tab%^( Scanning is& echo:%tab%%tab%%tab%%tab%%tab%throttled by Windows API^)& goto picknext
     call :colors  black yellow "scanning interfaces on this computer..."
     echo:
     echo:
@@ -391,13 +394,13 @@ timeout 1 >NUL
 )
 echo:
 COLOR 74
-netsh wlan disconnect interface="Wireles HELLO"
+netsh wlan disconnect interface="!interfacename!"
 timeout /t 5 > nul
 echo:
 COLOR 03
 echo:RECONNECTING...
 echo on
-netsh wlan connect name="%CURRENT_WIFI%" interface="Wireles HELLO"
+netsh wlan connect name="%CURRENT_WIFI%" interface="!interfacename!"
 @echo off
 if %errorlevel%==0 echo: & echo Done!
 echo:
