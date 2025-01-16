@@ -34,6 +34,7 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
             set encrypt_[!networks!]=
             set auth_[!networks!]=
             set signal_strength_[!networks!]=
+            set bssid_[!networks!]=
         )
 
 	if "%%a"=="Authentication" (
@@ -46,8 +47,14 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
 
         if "%%a"=="Signal" (
             set temp=00%%c
-            set signal_strength_[!networks!]=!temp:~-4!
+            if "%%c" NEQ "" set temp=!temp:~-4!
+            for %%z in ("!networks!") do set signal_strength_[%%~z]=!temp!_!signal_strength_[%%~z]!
         )
+        
+        if "%%a"=="BSSID" (
+            for %%z in ("!networks!") do set bssid_[%%~z]=%%d[o]!bssid_[%%~z]!
+        )
+
 
     )
     set total_found_networks=!networks!
@@ -55,9 +62,10 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     for /l %%a in ( 1, 1, !networks! ) do (
 
         if "!ssid_[%%a]!" == "" ( 
-            (echo:!signal_strength_[%%a]!%/"<hidden>")>>wifi_sign.txt
+            (echo:!signal_strength_[%%a]!/!bssid_[%%a]!/"")>>wifi_sign.txt
         ) else (
-            (echo:!signal_strength_[%%a]!/"!ssid_[%%a]!")>>wifi_sign.txt
+            if "!signal_strength_[%%a]!"=="" set signal_strength_[%%a]=signal_is_not_available
+            (echo:!signal_strength_[%%a]!/!bssid_[%%a]!/"!ssid_[%%a]!")>>wifi_sign.txt
         )
 
     )
@@ -74,8 +82,8 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     set /a escape=0 
     if !displaycurtain! LEQ 0 set escape=1
     set counter=0
-    if !skip!==0 for /f "tokens=1,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~j"&set signal_strength_[!counter!]=%%i&if "%%~j"=="!ssid_connected!" (echo !counter!^) %%~j*, %%i) else (echo !counter!^) %%~j, %%i)
-    if !skip! GTR 0 echo here %skip% !skip! Skip&for /f "skip=%skip% tokens=1,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~j"&set signal_strength_[!counter!]=%%i&if "%%~j"=="!ssid_connected!" (echo !corecount!^)^(!counter!^) %%~j*, %%i) else (echo !corecount!^)^(!counter!^) %%~j, %%i)
+    if !skip!==0 for /f "tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN signal:%%i        bssids:%%j) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !counter!^) %%~k* signal:%%i        bssids:%%j) else (if "%%~k" NEQ "" echo !counter!^) %%~k signal:%%i        bssids:%%j)
+    if !skip! GTR 0 echo here %skip% !skip! Skip&for /f "skip=%skip% tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN signal:%%i        bssids:%%j ) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k* signal:%%i        bssids:%%j) else (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k signal:%%i        bssids:%%j)
     :next
     set /a skip=skip+9
     call :colors black red "x^) Disconnect"
@@ -116,7 +124,7 @@ for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do echo netsh wlan connect
 
 
 
-if %errorlevel% NEQ 0 (for /l %%i in (0,1,5) do echo:) & echo:netsh wlan connect name=!ssid_[%choice%]! interface="!interfacename!" & echo:RAN ERROR [code:%errorlevel%] & if "!ssid_[%choice%]!"=="" call :colors black cyan "Invalid empty Wi-fi name selected" & pause >NUL & goto :start
+if %errorlevel% NEQ 0 (for /l %%i in (0,1,5) do echo:) & echo:netsh wlan connect name=!ssid_[%choice%]! interface="!interfacename!" & echo:RAN ERROR [code:%errorlevel%] & if "!ssid_[%choice%]!"=="" call :hidden_ssid
 if %errorlevel%==0 (echo: & call :colors black cyan "Done") else (echo: RAN ERROR & goto :nekst)
 echo:
 set disconnect_times=0
@@ -212,7 +220,11 @@ echo No Profile Exists for this ssid.
 choice /m "Would u like to create it?"
 if %errorlevel%==2 goto start
 :create_wlan_profile
-set "default_pfname=!ssid_choice_without_qoute!"
+:enter_hidden_ssid
+set ssid_is_hidden=0
+if "!ssid_choice_without_quote!"=="" set /a ssid_is_hidden=1&set /p hidden_ssid=Please enter the hidden network's SSID:
+if "!hidden_ssid!"=="" goto :enter_hidden_ssid
+if  "!ssid_choice_without_quote!"=="" (set "default_pfname=!hidden_ssid!"&set "ssid_choice_without_qoute=!hidden_ssid!") else (set "default_pfname=!ssid_choice_without_qoute!")
 :profile_nameing_unique_loop
 set /a counter=1
 for /f "tokens=1,2,3,4,*" %%a in ('netsh wlan show profiles interface="!interfacename!" ^| findstr /rc:"^[ ]" ^| find /i "all user profile"') do ( 
@@ -266,10 +278,12 @@ for /f "delims=" %%I in ("!ssid_choice_without_qoute!") do (echo:%%I)>>details_w
 (echo:!authentication_write!)>>details_wifi_export_00223912.txt
 (echo:!encryption_write!)>>details_wifi_export_00223912.txt
 (echo:!mode!)>>details_wifi_export_00223912.txt
+if %ssid_is_hidden%==1 (echo:^<nonBroadcast^>true^</nonBroadcast^>)>>details_wifi_export_00223912.txt
+if "!ssid_choice_without_qoute!" == "" echo HELLO THIS IS HIDDEN & PAUSE & goto :eof
 echo:Created Base file for use with Powershell. Press key
 pause >NUL
 if "!authentication_write!"=="WPA2PSK" goto wpa2-powershell
-powershell -c "$filePath = \"details_wifi_export_00223912.txt\";$profile_name = Get-Content -Path $filePath | Select-Object -First 1;$ssid = Get-Content -Path $filePath | Select-Object -Skip 1 | Select-Object -First 1;$authentication = Get-Content -Path $filePath | Select-Object -Skip 2 | Select-Object -First 1;$encryption = Get-Content -Path $filePath | Select-Object -Skip 3 | Select-Object -First 1;$connectionMode = Get-Content -Path $filePath | Select-Object -Skip 4 | Select-Object -First 1;$passphrase = Read-Host -Prompt \"Enter the Wi-Fi passphrase\" -AsSecureString;$fileName=[System.IO.Path]::GetRandomFileName().Substring(0, 10);$xmlFilePath = \"%tmp%\$fileName.xml\";$plainPassphrase = [System.Net.NetworkCredential]::new(\"\", $passphrase).Password;$xmlContent = \"^<WLANProfile xmlns=`\"http://www.microsoft.com/networking/WLAN/profile/v1"`\"><name>$profile_name</name><SSIDConfig><SSID><name>$ssid</name></SSID></SSIDConfig><connectionType>ESS</connectionType><connectionMode>$connectionMode</connectionMode><MSM><security><authEncryption><authentication>$authentication</authentication><encryption>$encryption</encryption><useOneX>false</useOneX></authEncryption><sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>$plainPassphrase</keyMaterial></sharedKey></security></MSM></WLANProfile>\";$xmlContent ^| Out-File -FilePath $xmlFilePath -Encoding UTF8;write-host $xmlFilePath;netsh wlan add profile filename=\"$xmlFilePath\";if ($LASTEXITCODE -eq 0) { write-host \"profile export success.\" } else { write-host \"error during export.\" };Remove-Item -Path $xmlFilePath;write-host -foregroundcolor Green \"profile done.\""
+powershell -c "$filePath = \"details_wifi_export_00223912.txt\";$profile_name = Get-Content -Path $filePath | Select-Object -First 1;$ssid = Get-Content -Path $filePath | Select-Object -Skip 1 | Select-Object -First 1;$authentication = Get-Content -Path $filePath | Select-Object -Skip 2 | Select-Object -First 1;$encryption = Get-Content -Path $filePath | Select-Object -Skip 3 | Select-Object -First 1;$connectionMode = Get-Content -Path $filePath | Select-Object -Skip 4 | Select-Object -First 1;$broadcastType = Get-Content -Path $filePath | Select-Object -Skip 5 | Select-Object -First 1;$passphrase = Read-Host -Prompt \"Enter the Wi-Fi passphrase\" -AsSecureString;$fileName=[System.IO.Path]::GetRandomFileName().Substring(0, 10);$xmlFilePath = \"%tmp%\$fileName.xml\";$plainPassphrase = [System.Net.NetworkCredential]::new(\"\", $passphrase).Password;$xmlContent = \"^<WLANProfile xmlns=`\"http://www.microsoft.com/networking/WLAN/profile/v1"`\"><name>$profile_name</name><SSIDConfig><SSID><name>$ssid</name></SSID>$broadcastType</SSIDConfig><connectionType>ESS</connectionType><connectionMode>$connectionMode</connectionMode><MSM><security><authEncryption><authentication>$authentication</authentication><encryption>$encryption</encryption><useOneX>false</useOneX></authEncryption><sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>$plainPassphrase</keyMaterial></sharedKey></security></MSM></WLANProfile>\";$xmlContent ^| Out-File -FilePath $xmlFilePath -Encoding UTF8;write-host $xmlFilePath;netsh wlan add profile filename=\"$xmlFilePath\";if ($LASTEXITCODE -eq 0) { write-host \"profile export success.\" } else { write-host \"error during export.\" };Remove-Item -Path $xmlFilePath;write-host -foregroundcolor Green \"profile done.\""
 del details_wifi_export_00223912.txt
 echo:Connecting with Wi-fi
 netsh wlan connect name="!default_pfname!" ssid="!ssid_choice_without_qoute!" interface="!interfacename!"
@@ -277,7 +291,7 @@ if %errorlevel%==0 (echo Success) else (echo Error connecting)
 timeout 10 >NUL
 goto :eof
 :wpa2-powershell
-powershell -c "$filePath = \"details_wifi_export_00223912.txt\";$profile_name = Get-Content -Path $filePath | Select-Object -First 1;$ssid = Get-Content -Path $filePath | Select-Object -Skip 1 | Select-Object -First 1;$authentication = Get-Content -Path $filePath | Select-Object -Skip 2 | Select-Object -First 1;$encryption = Get-Content -Path $filePath | Select-Object -Skip 3 | Select-Object -First 1;$connectionMode = Get-Content -Path $filePath | Select-Object -Skip 4 | Select-Object -First 1;$passphrase = Read-Host -Prompt \"Enter the Wi-Fi passphrase\" -AsSecureString;$fileName=[System.IO.Path]::GetRandomFileName().Substring(0, 10);$xmlFilePath = \"%tmp%\$fileName.xml\";$plainPassphrase = [System.Net.NetworkCredential]::new(\"\", $passphrase).Password;$xmlContent = \"^<WLANProfile xmlns=`\"http://www.microsoft.com/networking/WLAN/profile/v1"`\"><name>$profile_name</name><SSIDConfig><SSID><name>$ssid</name></SSID></SSIDConfig><connectionType>ESS</connectionType><connectionMode>$connectionMode</connectionMode><MSM><security><authEncryption><authentication>$authentication</authentication><encryption>$encryption</encryption><useOneX>false</useOneX></authEncryption><sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>$plainPassphrase</keyMaterial></sharedKey><PMKCacheMode>enabled</PMKCacheMode><PMKCacheTTL>240</PMKCacheTTL><PMKCacheSize>20</PMKCacheSize></security></MSM></WLANProfile>\";$xmlContent ^| Out-File -FilePath $xmlFilePath -Encoding UTF8;write-host $xmlFilePath;netsh wlan add profile filename=\"$xmlFilePath\";if ($LASTEXITCODE -eq 0) { write-host \"profile export success.\" } else { write-host \"error during export.\" };Remove-Item -Path $xmlFilePath;write-host -foregroundcolor Green \"profile done.\""
+powershell -c "$filePath = \"details_wifi_export_00223912.txt\";$profile_name = Get-Content -Path $filePath | Select-Object -First 1;$ssid = Get-Content -Path $filePath | Select-Object -Skip 1 | Select-Object -First 1;$authentication = Get-Content -Path $filePath | Select-Object -Skip 2 | Select-Object -First 1;$encryption = Get-Content -Path $filePath | Select-Object -Skip 3 | Select-Object -First 1;$connectionMode = Get-Content -Path $filePath | Select-Object -Skip 4 | Select-Object -First 1;$broadcastType = Get-Content -Path $filePath | Select-Object -Skip 5 | Select-Object -First 1;$passphrase = Read-Host -Prompt \"Enter the Wi-Fi passphrase\" -AsSecureString;$fileName=[System.IO.Path]::GetRandomFileName().Substring(0, 10);$xmlFilePath = \"%tmp%\$fileName.xml\";$plainPassphrase = [System.Net.NetworkCredential]::new(\"\", $passphrase).Password;$xmlContent = \"^<WLANProfile xmlns=`\"http://www.microsoft.com/networking/WLAN/profile/v1"`\"><name>$profile_name</name><SSIDConfig><SSID><name>$ssid</name></SSID>$broadcastType</SSIDConfig><connectionType>ESS</connectionType><connectionMode>$connectionMode</connectionMode><MSM><security><authEncryption><authentication>$authentication</authentication><encryption>$encryption</encryption><useOneX>false</useOneX></authEncryption><sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>$plainPassphrase</keyMaterial></sharedKey><PMKCacheMode>enabled</PMKCacheMode><PMKCacheTTL>240</PMKCacheTTL><PMKCacheSize>20</PMKCacheSize></security></MSM></WLANProfile>\";$xmlContent ^| Out-File -FilePath $xmlFilePath -Encoding UTF8;write-host $xmlFilePath;netsh wlan add profile filename=\"$xmlFilePath\";if ($LASTEXITCODE -eq 0) { write-host \"profile export success.\" } else { write-host \"error during export.\" };Remove-Item -Path $xmlFilePath;write-host -foregroundcolor Green \"profile done.\""
 del details_wifi_export_00223912.txt
 echo:Connecting with Wi-fi
 netsh wlan connect name="!default_pfname!" ssid="!ssid_choice_without_qoute!" interface="!interfacename!"
@@ -354,6 +368,11 @@ if %errorlevel%==2 goto :start
 echo:deleting in 2 seconds & timeout 2 >NUL
 for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do netsh wlan delete profile name="%%i" interface="!interfacename!"
 goto :eof
+:hidden_ssid
+call :colors black cyan "Wi-fi SSID is empty."
+choice /m "Do you want to attempt to connect?"
+if %errorlevel%==1 goto :no_profile_exists
+goto :start
 :re-connect
 for /f "tokens=1,2,* delims=:" %%A in ('netsh wlan show interfaces ^| findstr /C:"SSID" ^| findstr /v "BSSID"') do set "CURRENT_WIFI=%%B"
 
