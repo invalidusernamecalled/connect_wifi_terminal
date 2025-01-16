@@ -79,17 +79,19 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     :next
     set /a skip=skip+9
     call :colors black red "x^) Disconnect"
-    echo:
+    echo: r^) re-connect
     if %list_empty%==0 echo Select 1-9   
-    choice /c %choice_list%YXR /n /m "Or Press Y for (next page),(R) for refresh"    
+    choice /c %choice_list%YXLr /n /m "Or Press Y for (next page),(L) for refresh"    
     set choice=%errorlevel%
     if %list_empty%==1 if %choice%==2 netsh wlan disconnect interface="!interfacename!" &  goto :start
     if %list_empty%==1 if %choice%==3 echo refreshing ..&timeout 2 >NUL& start cmd /c "call %~fp0" & goto :eof
+    if %list_empty%==1 if %choice%==4 call :re-connect & goto :start
     if %list_empty%==1 goto :start
     if !choice!==10 if !escape!==0 (call :display_first_line & goto repat) else (set /a skip=0 &set corecount=9 & call :display_first_line & goto repat)
     echo:
     if %choice%==11 call :disconnect & pause >NUL & goto :start
     if %choice%==12 echo refreshing ..&timeout 2 >NUL& start cmd /c "call %~fp0" & goto :eof
+    if %choice%==13 call :re-connect & goto :start
 for /f "tokens=*" %%i in ("!ssid_[%choice%]!") do echo:you chose %%i&set ssid_[%choice%]="%%i"&set "ssid_choice_without_qoute=%%~i"
 echo:
 call :colors black green "CONNECTING..."
@@ -351,4 +353,34 @@ choice /m "Sure?"
 if %errorlevel%==2 goto :start
 echo:deleting in 2 seconds & timeout 2 >NUL
 for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do netsh wlan delete profile name="%%i" interface="!interfacename!"
+goto :eof
+:re-connect
+for /f "tokens=1,2,* delims=:" %%A in ('netsh wlan show interfaces ^| findstr /C:"SSID" ^| findstr /v "BSSID"') do set "CURRENT_WIFI=%%B"
+
+:: Trim leading/trailing spaces
+for /f "tokens=* delims= " %%A in ("%CURRENT_WIFI%") do set CURRENT_WIFI=%%A
+)
+
+:: Check if a network name was found
+if "%CURRENT_WIFI%"=="" (
+    echo No Wi-Fi network is currently connected.
+    pause
+    goto :eof
+) else (
+echo YOU WERE PREVIOUSLY CONNECTED: "%CURRENT_WIFI%" bye bye.. disconnecting
+timeout 1 >NUL
+)
+echo:
+COLOR 74
+netsh wlan disconnect interface="Wireles HELLO"
+timeout /t 5 > nul
+echo:
+COLOR 03
+echo:RECONNECTING...
+echo on
+netsh wlan connect name="%CURRENT_WIFI%" interface="Wireles HELLO"
+@echo off
+if %errorlevel%==0 echo: & echo Done!
+echo:
+timeout 5
 goto :eof
