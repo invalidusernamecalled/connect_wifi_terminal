@@ -50,11 +50,11 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
         if "%%a"=="Signal" (
             set temp=00%%c
             if "%%c" NEQ "" set temp=!temp:~-4!
-            for %%z in ("!networks!") do set signal_strength_[%%~z]=[!nutindex!]!temp!!signal_strength_[%%~z]!
+            for %%z in ("!networks!") do set signal_strength_[%%~z]=!signal_strength_[%%~z]![!nutindex!]!temp!
         )
         
         if "%%a"=="BSSID" (
-            for %%z in ("!networks!") do set /a nutindex+=1&set bssid_[%%~z]=%%d--[!nutindex!]!bssid_[%%~z]!
+            for %%z in ("!networks!") do set /a nutindex+=1&set bssid_[%%~z]=!bssid_[%%~z]![!nutindex!]--%%d
         )
 
 
@@ -84,10 +84,12 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     set /a escape=0 
     if !displaycurtain! LEQ 0 set escape=1
     set counter=0
+    echo:===============================================================================
+    echo:#^)SSID NAME%tab%SIGNAL:%tab%BSSID:
+    echo:===============================================================================
+    if !skip!==0 for /f "tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R /+4 ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
     
-    if !skip!==0 for /f "tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
-    
-    if !skip! GTR 0 echo here %skip% !skip! Skip&for /f "skip=%skip% tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j ) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
+    if !skip! GTR 0 echo here %skip% !skip! Skip&for /f "skip=%skip% tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R /+4') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j ) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
     :next
     set /a skip=skip+9
     call :colors black red "x^) Disconnect"
