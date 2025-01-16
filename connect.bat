@@ -226,9 +226,9 @@ if %errorlevel%==2 goto start
 :create_wlan_profile
 :enter_hidden_ssid
 set ssid_is_hidden=0
-if "!ssid_choice_without_quote!"=="" set /a ssid_is_hidden=1&set /p hidden_ssid=Please enter the hidden network's SSID:
-if "!hidden_ssid!"=="" goto :enter_hidden_ssid
-if  "!ssid_choice_without_quote!"=="" (set "default_pfname=!hidden_ssid!"&set "ssid_choice_without_qoute=!hidden_ssid!") else (set "default_pfname=!ssid_choice_without_qoute!")
+if "!ssid_choice_without_qoute!"=="" set /a ssid_is_hidden=1&set /p hidden_ssid=Please enter the hidden network's SSID:
+i!ssid_is_hidden!==1 if "!hidden_ssid!"=="" goto :enter_hidden_ssid
+if  "!ssid_choice_without_qoute!"=="" (set "default_pfname=!hidden_ssid!"&set "ssid_choice_without_qoute=!hidden_ssid!") else (set "default_pfname=!ssid_choice_without_qoute!")
 :profile_nameing_unique_loop
 set /a counter=1
 for /f "tokens=1,2,3,4,*" %%a in ('netsh wlan show profiles interface="!interfacename!" ^| findstr /rc:"^[ ]" ^| find /i "all user profile"') do ( 
