@@ -36,6 +36,7 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
             set auth_[!networks!]=
             set signal_strength_[!networks!]=
             set bssid_[!networks!]=
+            set nutindex=0
         )
 
 	if "%%a"=="Authentication" (
@@ -49,11 +50,11 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
         if "%%a"=="Signal" (
             set temp=00%%c
             if "%%c" NEQ "" set temp=!temp:~-4!
-            for %%z in ("!networks!") do set signal_strength_[%%~z]=!temp!_!signal_strength_[%%~z]!
+            for %%z in ("!networks!") do set signal_strength_[%%~z]=[!nutindex!]!temp!!signal_strength_[%%~z]!
         )
         
         if "%%a"=="BSSID" (
-            for %%z in ("!networks!") do set bssid_[%%~z]=%%d[o]!bssid_[%%~z]!
+            for %%z in ("!networks!") do set /a nutindex+=1&set bssid_[%%~z]=%%d--[!nutindex!]!bssid_[%%~z]!
         )
 
 
