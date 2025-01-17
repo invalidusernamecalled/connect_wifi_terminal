@@ -6,7 +6,7 @@
 
 # Windows Troubleshooting
 
-<SUP> Link - [Windows changes to API impacts network scanning request](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)
+<SUP> Link - [Changes to Windows API impact network scanning request](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)
 
 You might come accross the following (or similar) message when running the script.
 
