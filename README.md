@@ -23,7 +23,7 @@ Or, to open the Location page from the Run dialog box, press Windows logo key + 
 Function WlanQueryInterface returns error 5:
 The requested operation requires elevation (Run as administrator).
 ```
-For network scanning to work due to new restrictions introduced in the Windows API you can use the following method. 
+For network scanning to work due to new restrictions introduced in the Windows API you could use the following method. 
 
 Goto  (Windows) Settings > Privacy & Security > Location<br>
 + You need to turn on "Location Services"<br>
