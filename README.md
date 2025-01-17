@@ -28,4 +28,4 @@ To resolve this you need to goto  (Windows) Settings > Privacy & Security > Loca
 + You need to turn on "Let apps access your Location"
 + You may then need to right-click the script and "Run as administrator"
 
-Usually doing this once, resolves it forever.
+Usually doing this once, resolves it forever. (Subsequent runs of the app don't require "Run as administrator")
