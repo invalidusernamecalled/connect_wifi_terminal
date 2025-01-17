@@ -24,5 +24,8 @@ Function WlanQueryInterface returns error 5:
 The requested operation requires elevation (Run as administrator).
 ```
 To resolve this you need to goto  (Windows) Settings > Privacy & Security > Location<br>
-You need to turn on "Location Services"<br>
-You need to turn on "Let apps access your Location"
++ You need to turn on "Location Services"<br>
++ You need to turn on "Let apps access your Location"
++ You may then need to right-click the script and "Run as administrator"
+
+Usually doing this once, resolves it forever.
