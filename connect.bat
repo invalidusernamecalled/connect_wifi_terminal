@@ -98,13 +98,13 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     choice /c %choice_list%YXRD /n /m "Or Press Y for (next page),(R) for list refresh"    
     set choice=%errorlevel%
     if %list_empty%==1 if %choice%==2 netsh wlan disconnect interface="!interfacename!" &  goto :start
-    if %list_empty%==1 if %choice%==3 echo refreshing ..&timeout 2 >NUL& start cmd /c "call %~fp0" & goto :eof
+    if %list_empty%==1 if %choice%==3 echo refreshing ..&timeout 2 >NUL& start cmd /c "call "%~fp0"" & goto :eof
     if %list_empty%==1 if %choice%==4 call :re-connect & goto :start
     if %list_empty%==1 goto :start
     if !choice!==10 if !escape!==0 (call :display_first_line & goto repat) else (set /a skip=0 &set corecount=9 & call :display_first_line & goto repat)
     echo:
     if %choice%==11 call :disconnect & pause >NUL & goto :start
-    if %choice%==12 echo refreshing ..&timeout 2 >NUL& start cmd /c "call %~fp0" & goto :eof
+    if %choice%==12 echo refreshing ..&timeout 2 >NUL& start cmd /c "call "%~fp0"" & goto :eof
     if %choice%==13 call :re-connect & goto :start
 for /f "tokens=*" %%i in ("!ssid_[%choice%]!") do echo:you chose %%i&set ssid_[%choice%]="%%i"&set "ssid_choice_without_qoute=%%~i"
 echo:
@@ -212,7 +212,7 @@ cls
     
     if "!interfacename!" NEQ "" (for /f "delims=" %%i in ("!interfacename!") do echo Found:^<%%i^>.) else (echo: & echo:***No Wireless interface found^!*** & echo: &  PAUSE & GOTO :eof)
     :picknext
-    netsh wlan show networks 1>NUL 2>NUL
+    netsh wlan show networks 1>NUL
     if %errorlevel% NEQ 0 echo:&call :colors white red "Check"&echo|set/p=..Wifi is Switched On.&call :colors green black " Network scanning error code: [%errorlevel%]. Try again"&echo:&netsh wlan show interfaces | findstr /ic:"hardware on" /ic:"hardware off" /ic:"software on" /ic:"software off" /irc:"Name *[:]"
 
 
