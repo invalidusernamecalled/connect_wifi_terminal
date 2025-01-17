@@ -1,9 +1,4 @@
-+++++++++++++++++++++++++++++++++++++++++++++++
- + this script generates some files in the same folder
- + it is therefore recommended to host the script in a a separate folder
-
-+++++++++++++++++++++++++++++++++++++++++++++++
-
++++++++++++++++++++++++++++++++++++++++
 # Windows Troubleshooting
 
 <SUP> Link - [Changes to Windows API impact network scanning request](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)
