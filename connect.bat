@@ -60,19 +60,19 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
 
     )
     set total_found_networks=!networks!
-    type nul >wifi_sign.txt
+    type nul >"%tmp%\wifi_sign.txt"
     for /l %%a in ( 1, 1, !networks! ) do (
 
         if "!ssid_[%%a]!" == "" ( 
-            (echo:!signal_strength_[%%a]!/!bssid_[%%a]!/"")>>wifi_sign.txt
+            (echo:!signal_strength_[%%a]!/!bssid_[%%a]!/"")>>"%tmp%\wifi_sign.txt"
         ) else (
             if "!signal_strength_[%%a]!"=="" set signal_strength_[%%a]=signal_is_not_available
-            (echo:!signal_strength_[%%a]!/!bssid_[%%a]!/"!ssid_[%%a]!")>>wifi_sign.txt
+            (echo:!signal_strength_[%%a]!/!bssid_[%%a]!/"!ssid_[%%a]!")>>"%tmp%\wifi_sign.txt"
         )
 
     )
     set list_empty=1
-    for /f "delims=" %%i in ('type wifi_sign.txt') do set /a list_empty=0
+    for /f "delims=" %%i in ('type "%tmp%\wifi_sign.txt"') do set /a list_empty=0
     if %list_empty%==1 echo (list empty)
     if %list_empty%==1 (set choice_list=) else (set choice_list=123456789)
     :print_info
@@ -87,9 +87,9 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     echo:===============================================================================
     echo:#^)SSID NAME%tab%SIGNAL:%tab%BSSID:
     echo:===============================================================================
-    if !skip!==0 for /f "tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R /+4 ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
+    if !skip!==0 for /f "tokens=1,2,* delims=/" %%i in ('type "%tmp%\wifi_sign.txt" ^| sort /R /+4 ') do set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
     
-    if !skip! GTR 0 echo here %skip% !skip! Skip&for /f "skip=%skip% tokens=1,2,* delims=/" %%i in ('type wifi_sign.txt ^| sort /R /+4') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j ) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
+    if !skip! GTR 0 for /f "skip=%skip% tokens=1,2,* delims=/" %%i in ('type "%tmp%\wifi_sign.txt" ^| sort /R /+4') do set /a corecount+=1&set /a counter+=1 & (if !counter! GTR 9 goto :next) & set "ssid_[!counter!]=%%~k"&(if "%%~k"=="" echo:!counter!^)-HIDDEN%tab%signal:%%i%tab%%tab%bssids:%%j ) &if "%%~k"=="!ssid_connected!" (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k*%tab%signal:%%i%tab%%tab%bssids:%%j) else (if "%%~k" NEQ "" echo !corecount!^)^(!counter!^) %%~k%tab%signal:%%i%tab%%tab%bssids:%%j)
     :next
     set /a skip=skip+9
     call :colors black red "x^) Disconnect"
@@ -117,14 +117,14 @@ for /f "delims=" %%i in ('dir /b "%ProgramData%\Microsoft\Wlansvc\Profiles\Inter
 echo Guid==%guid_dir%
 
 echo:GETTING PROFILE FILE...
-powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $directoryPath -Filter \"*.xml\";foreach ($xmlFile in $xmlFiles) {  [xml]$xmlContent = Get-Content $xmlFile.FullName;$ssidName = $xmlContent.WLANProfile.SSIDConfig.SSID.name; $profileName = $xmlContent.WLANProfile.name; if ($ssidName -eq \"!ssid_choice_without_qoute!\") { Write-Host \"$profileName\" } };">wifi_sign_profile_name.txt
+powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $directoryPath -Filter \"*.xml\";foreach ($xmlFile in $xmlFiles) {  [xml]$xmlContent = Get-Content $xmlFile.FullName;$ssidName = $xmlContent.WLANProfile.SSIDConfig.SSID.name; $profileName = $xmlContent.WLANProfile.name; if ($ssidName -eq \"!ssid_choice_without_qoute!\") { Write-Host \"$profileName\" } };">"%tmp%\wifi_sign_profile_name.txt"
 
 
 set profile_exist=0
-for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do set profile_exist=1
+for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do set profile_exist=1
 if !profile_exist! == 0 (call :no_profile_exists&goto :eof)
 
-for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do echo netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" & netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL
+for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do echo netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" & netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL
 
 
 
@@ -286,7 +286,6 @@ for /f "delims=" %%I in ("!ssid_choice_without_qoute!") do (echo:%%I)>>details_w
 (echo:!encryption_write!)>>details_wifi_export_00223912.txt
 (echo:!mode!)>>details_wifi_export_00223912.txt
 if %ssid_is_hidden%==1 (echo:^<nonBroadcast^>true^</nonBroadcast^>)>>details_wifi_export_00223912.txt
-if "!ssid_choice_without_qoute!" == "" echo HELLO THIS IS HIDDEN & PAUSE & goto :eof
 echo:Created Base file for use with Powershell. Press key
 pause >NUL
 if "!authentication_write!"=="WPA2PSK" goto wpa2-powershell
@@ -373,7 +372,7 @@ goto :eof
 choice /m "Sure?"
 if %errorlevel%==2 goto :start
 echo:deleting in 2 seconds & timeout 2 >NUL
-for /f "tokens=*" %%i in (wifi_sign_profile_name.txt) do netsh wlan delete profile name="%%i" interface="!interfacename!"
+for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do netsh wlan delete profile name="%%i" interface="!interfacename!"
 goto :eof
 :hidden_ssid
 call :colors black cyan "Wi-fi SSID is empty."
