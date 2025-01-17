@@ -8,7 +8,7 @@
 
 <SUP> Link - [Changes to Windows API impact network scanning request](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)
 
-You might come accross the following (or similar) message when running the script.
+You might come accross the following (or similar) message when running a scan from the script.
 
 ```
 Network shell commands need location permission to access WLAN information. Turn on Location services on the Location page in Privacy & security settings.
