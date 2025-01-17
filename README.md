@@ -1,6 +1,6 @@
 +++++++++++++++++++++++++++++++++++++++++++++++
  + this script generates some files in the same folder
- + it is therefore recommended to create a separate folder to host the script.
+ + it is therefore recommended to host the script in a a separate folder
 
 +++++++++++++++++++++++++++++++++++++++++++++++
 
