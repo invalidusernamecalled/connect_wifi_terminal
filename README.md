@@ -1,6 +1,6 @@
 +++++++++++++++++++++++++++++++++++++++++++++++
- + this script generates files in the same folder
- + recommended to create a new empty folder and run the script from there.
+ + this script generates some files in the same folder
+ + it is therefore recommended to create a separate folder to host the script.
 
 +++++++++++++++++++++++++++++++++++++++++++++++
 
