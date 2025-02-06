@@ -228,7 +228,6 @@ if %errorlevel%==2 goto start
 :create_wlan_profile
 :enter_hidden_ssid
 set ssid_is_hidden=0
-echo on
 if "!ssid_choice_without_qoute!"=="" set /a ssid_is_hidden=1&set /p hidden_ssid=Please enter the hidden network's SSID:
 if !ssid_is_hidden!==1 if "!hidden_ssid!"=="" goto :enter_hidden_ssid
 if "!ssid_choice_without_qoute!"=="" (set "default_pfname=!hidden_ssid!"&set "ssid_choice_without_qoute=!hidden_ssid!") else (set "default_pfname=!ssid_choice_without_qoute!")
