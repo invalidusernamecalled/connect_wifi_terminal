@@ -3,15 +3,17 @@
  + it is therefore recommended to host the script in a a separate folder
 
 +++++++++++++++++++++++++++++++++++++++++++++++
-# Windows Troubleshooting
+#### Troubleshooting Info
 
-#### Summary (for the Script to work):-
+#### (for the Script to work):-
 + Windows location services need to be <b>ON</b>
 + Let apps access your location <b>ON</b>
 + Let desktop apps access your location <b>ON</b>
 + "Network Command Shell" location access needs be <b>ON</b>
 
 <SUP> Link - [Changes to Windows API impact network scanning request](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)
+
+#### Details
 
 You might come accross the following (or similar) message when running a scan with the script.
 
