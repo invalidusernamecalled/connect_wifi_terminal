@@ -95,6 +95,8 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     call :colors black red "x^) Disconnect"
     echo: D^) re-connect
     if %list_empty%==0 echo Select 1-9   
+    if  "%~1" NEQ "" set "ssid_choice_without_qoute=DIGISOI" & goto :without_args
+
     choice /c %choice_list%YXRD /n /m "Or Press Y for (next page),(R) for list refresh"    
     set choice=%errorlevel%
     if %list_empty%==1 if %choice%==2 netsh wlan disconnect interface="!interfacename!" &  goto :start
@@ -110,9 +112,7 @@ for /f "tokens=*" %%i in ("!ssid_[%choice%]!") do echo:you chose %%i&set ssid_[%
 echo:
 call :colors black green "CONNECTING..."
 echo:
-
-
-
+:without_args
 for /f "delims=" %%i in ('dir /b "%ProgramData%\Microsoft\Wlansvc\Profiles\Interfaces\*" ^| find /i "%real_guid%"') do set guid_dir=%ProgramData%\Microsoft\Wlansvc\Profiles\Interfaces\%%i
 echo Guid==%guid_dir%
 
@@ -123,8 +123,9 @@ powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $
 set profile_exist=0
 for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do set profile_exist=1
 if !profile_exist! == 0 (call :no_profile_exists&goto :eof)
-
-for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do echo netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" & netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL
+if "%~1" NEQ "" (for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do echo netsh wlan connect name="%%i" ssid="!ssid_choice_without_qoute!" interface="!interfacename!" & netsh wlan connect name="%%i" ssid="!ssid_choice_without_qoute!" interface="!interfacename!" >NUL) & goto :eof
+for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do ( choice /m "profile:%%i %tab% :would u like to connect to this?"
+if !errorlevel! == 1 netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL )
 
 
 
@@ -161,7 +162,7 @@ for /f "tokens=2 delims=:" %%i in ('netsh interface ip show config "!interfacena
 if "%pingable-gateway%"=="" (echo NO GATEWAY FOUND:) else (echo pinging GATEWAY....&ping %pingable-gateway%  -S %found_ip_address%  | find /i "ttl")
 echo:------------------
 echo pinging GOOGLE
-ping -n 3 8.8.8.8 -S %found_ip_address% | find /i "ttl"&&(call :colors black magenta "^>       Hip Hip Hurray        "& PAUSE >NUL) || (call :colors white blue "Nope Nop It's time to be a Purple head again ^!"&PAUSE >NUL &goto :start)
+ping -n 1 8.8.8.8 -S %found_ip_address% | find /i "ttl"&&(call :colors black magenta "^>       Hip Hip Hurray        "& PAUSE >NUL) || (call :colors white blue "Nope Nop It's time to be a Purple head again ^!"&PAUSE >NUL &goto :start)
 timeout 20 >NUL
 goto :start
 :colors
@@ -193,7 +194,7 @@ REM powershell -c "write-host -nonewline -backgroundcolor %first% -foregroundcol
 goto :eof
 :display_first_line
 cls
-    if defined interfacename if "!interfacename!" NEQ "" echo interface ^<!interfacename!^>%tab%%tab%%tab%%tab%^( Scanning is& echo:%tab%%tab%%tab%%tab%%tab%throttled by Windows API^)& goto picknext
+    if defined interfacename if "!interfacename!" NEQ "" echo interface ^<!interfacename!^>%tab%%tab%%tab%%tab%^( Scanning is& echo:%tab%%tab%%tab%%tab%%tab%throttled by Windows API^)&(for /f "tokens=2 delims=:" %%i in ('ipconfig ^| find /i "ipv4"') do ping -n 1 1.1.1.1 >NUL&&echo %tab%IP: [%%i], Able to ping to 1.1.1.1.)& goto picknext
     call :colors  black yellow "scanning interfaces on this computer..."
     echo:
     echo:
@@ -223,8 +224,9 @@ goto :eof
 
 :no_profile_exists
 echo No Profile Exists for this ssid.
-choice /m "Would u like to create it?"
-if %errorlevel%==2 goto start
+echo|set/p=Would u like to create it?
+choice /m "(c)reate profile, use (e)xisting profiles" /c ce
+if %errorlevel%==2 goto connect_all_profiles
 :create_wlan_profile
 :enter_hidden_ssid
 set ssid_is_hidden=0
@@ -375,8 +377,19 @@ for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do netsh wl
 goto :eof
 :hidden_ssid
 call :colors black cyan "Wi-fi SSID is empty."
-choice /m "Do you want to attempt to connect?"
+echo |set /p=Do you want to attempt to connect using existing profile or create a new?
+choice /m "(C)reate Profile / (e)xisting Profile" /c ce
 if %errorlevel%==1 goto :no_profile_exists
+:connect_all_profiles
+echo:GETTING  ALL PROFILE FILES...
+powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $directoryPath -Filter \"*.xml\";foreach ($xmlFile in $xmlFiles) {  [xml]$xmlContent = Get-Content $xmlFile.FullName;$profileName = $xmlContent.WLANProfile.name;  write-host $profileName };">>"%tmp%\wifi_sign_profile_name.txt"
+set /a profile_counter=1
+:here222
+for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do echo:!profile_counter!^> %%i & CALL set "all-profiles[!profile_counter!]=%%i" & set /a profile_counter+=1
+set /p choose-the-profile=Enter profile no.:
+CALL set "chosen_profile=%%all-profiles[!choose-the-profile!]%%"
+choice /m "profile:!chosen_profile!%tab% :would u like to connect to this?"
+if !errorlevel! == 1 netsh wlan connect name="!chosen_profile!" interface="!interfacename!" >NUL
 goto :start
 :re-connect
 for /f "tokens=1,2,* delims=:" %%A in ('netsh wlan show interfaces ^| findstr /C:"SSID" ^| findstr /v "BSSID"') do set "CURRENT_WIFI=%%B"
