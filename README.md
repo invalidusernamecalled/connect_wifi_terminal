@@ -1,4 +1,4 @@
-+++++++++++i+n+f+o+r+m+a+t+i+i+o+n++++++
+++++++-----<b>i</b>+n+<b>f</b>+o+<b>r</b>+m+<b>a</b>+t+<b>i</b>+i+<b>o</b>+n----++
  + this script may generate some files in the working folder
  + it is therefore recommended to host the script in a a separate folder
 
