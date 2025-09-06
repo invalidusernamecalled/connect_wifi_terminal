@@ -1,6 +1,15 @@
 @echo off
-cmd /c "taskkill /fi "WINDOWTITLE eq xCsjKslaOp66666*""&&echo:DONE
-title xCsjKslaOp66666
+net session >nul 2>&1
+if %errorlevel%==0 (
+    set "title_append="
+) else (
+    set "title_append=^^^<^^^!^^^> Not running as Administrator"
+)
+if "%title_append%" NEQ "" echo|set /p=%title_append%  ANY COMMAND MAY NOT WORK ^^^!
+echo:
+echo|set/p=Close previous window/instances.....
+cmd /c "taskkill /fi "WINDOWTITLE eq xCsjKslaOp66666*"" >NUL&&echo|set/p=[ok]
+title xCsjKslaOp66666 
 setlocal enabledelayedexpansion
 for /f "delims=" %%i in ('powershell -c "write-host -nonewline `t"') do set "tab=%%i"
 set networks=0
@@ -12,7 +21,7 @@ set guid_[!networks!]=
 if /i "!temp_name!"=="GUID" for /f "tokens=* delims= " %%d in ("%%j") do set guid_[!networks!]=%%d
 )
 set total_network=!networks!
-
+for /f "delims=" %%i in ('dir /b "%ProgramData%\Microsoft\Wlansvc\Profiles\Interfaces\*" ^| find /i "%real_guid%"') do set guid_dir=%ProgramData%\Microsoft\Wlansvc\Profiles\Interfaces\%%i
 :start
 call :display_first_line
 echo:Total network interfaces found:%total_network%
@@ -93,21 +102,23 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     :next
     set /a skip=skip+9
     call :colors black red "x^) Disconnect"
-    echo: D^) re-connect
+    echo: D^) re-connect E^) Existing profile
     if %list_empty%==0 echo Select 1-9   
     if  "%~1" NEQ "" set "ssid_choice_without_qoute=DIGISOI" & goto :without_args
 
-    choice /c %choice_list%YXRD /n /m "Or Press Y for (next page),(R) for list refresh"    
+    choice /c %choice_list%YXRDE /n /m "Or Press Y for (next page),(R) for list refresh"    
     set choice=%errorlevel%
     if %list_empty%==1 if %choice%==2 netsh wlan disconnect interface="!interfacename!" &  goto :start
     if %list_empty%==1 if %choice%==3 echo refreshing ..&timeout 2 >NUL& start cmd /c "call "%~fp0"" & goto :eof
     if %list_empty%==1 if %choice%==4 call :re-connect & goto :start
+    if %list_empty%==1 if %choice%==5 goto connect_all_profiles
     if %list_empty%==1 goto :start
     if !choice!==10 if !escape!==0 (call :display_first_line & goto repat) else (set /a skip=0 &set corecount=9 & call :display_first_line & goto repat)
     echo:
     if %choice%==11 call :disconnect & pause >NUL & goto :start
     if %choice%==12 echo refreshing ..&timeout 2 >NUL& start cmd /c "call "%~fp0"" & goto :eof
     if %choice%==13 call :re-connect & goto :start
+    if %choice%==14 goto connect_all_profiles
 for /f "tokens=*" %%i in ("!ssid_[%choice%]!") do echo:you chose %%i&set ssid_[%choice%]="%%i"&set "ssid_choice_without_qoute=%%~i"
 echo:
 call :colors black green "CONNECTING..."
@@ -115,8 +126,8 @@ echo:
 :without_args
 for /f "delims=" %%i in ('dir /b "%ProgramData%\Microsoft\Wlansvc\Profiles\Interfaces\*" ^| find /i "%real_guid%"') do set guid_dir=%ProgramData%\Microsoft\Wlansvc\Profiles\Interfaces\%%i
 echo Guid==%guid_dir%
-
-echo:GETTING PROFILE FILE...
+if "!ssid_[%choice%]!"=="" call :hidden_ssid & goto :after_call_hidden_ssid
+for /f "delims=" %%i in ('echo:"GETTING PROFILE FILE for particular ssid:!ssid_choice_without_qoute!..."') do echo %%~i
 powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $directoryPath -Filter \"*.xml\";foreach ($xmlFile in $xmlFiles) {  [xml]$xmlContent = Get-Content $xmlFile.FullName;$ssidName = $xmlContent.WLANProfile.SSIDConfig.SSID.name; $profileName = $xmlContent.WLANProfile.name; if ($ssidName -eq \"!ssid_choice_without_qoute!\") { Write-Host \"$profileName\" } };">"%tmp%\wifi_sign_profile_name.txt"
 
 
@@ -124,15 +135,14 @@ set profile_exist=0
 for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do set profile_exist=1
 if !profile_exist! == 0 (call :no_profile_exists&goto :eof)
 if "%~1" NEQ "" (for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do echo netsh wlan connect name="%%i" ssid="!ssid_choice_without_qoute!" interface="!interfacename!" & netsh wlan connect name="%%i" ssid="!ssid_choice_without_qoute!" interface="!interfacename!" >NUL) & goto :eof
-for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do ( choice /m "profile:%%i %tab% :would u like to connect to this?"
-if !errorlevel! == 1 netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL )
-
-
-
-
-
-if %errorlevel% NEQ 0 (for /l %%i in (0,1,5) do echo:) & echo:netsh wlan connect name=!ssid_[%choice%]! interface="!interfacename!" & echo:RAN ERROR [code:%errorlevel%] & if "!ssid_[%choice%]!"=="" call :hidden_ssid
+for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do ( choice /m "profile:%%i %tab% :would u like to connect to this?" /c ynq
+if !errorlevel! == 3  
+if !errorlevel! == 1 netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL & call :checkerrorlevelwlanprofile)
+goto after_call_hidden_ssid
+:checkerrorlevelwlanprofile
 if %errorlevel%==0 (echo: & call :colors black cyan "Done") else (echo: RAN ERROR & goto :nekst)
+exit /b
+:after_call_hidden_ssid
 echo:
 set disconnect_times=0
 :END
@@ -159,7 +169,7 @@ if "%found_ip_address%"=="0" echo: on interface "!interfacename!"
 echo:
 set pingable-gateway=
 for /f "tokens=2 delims=:" %%i in ('netsh interface ip show config "!interfacename!" ^| find /i "Default Gateway"') do set pingable-gateway=%%i
-if "%pingable-gateway%"=="" (echo NO GATEWAY FOUND:) else (echo pinging GATEWAY....&ping %pingable-gateway%  -S %found_ip_address%  | find /i "ttl")
+if "%pingable-gateway%"=="" (echo NO GATEWAY FOUND:) else (echo pinging GATEWAY....&ping -n 1 %pingable-gateway%  -S %found_ip_address%  | find /i "ttl")
 echo:------------------
 echo pinging GOOGLE
 ping -n 1 8.8.8.8 -S %found_ip_address% | find /i "ttl"&&(call :colors black magenta "^>       Hip Hip Hurray        "& PAUSE >NUL) || (call :colors white blue "Nope Nop It's time to be a Purple head again ^!"&PAUSE >NUL &goto :start)
@@ -194,7 +204,7 @@ REM powershell -c "write-host -nonewline -backgroundcolor %first% -foregroundcol
 goto :eof
 :display_first_line
 cls
-    if defined interfacename if "!interfacename!" NEQ "" echo interface ^<!interfacename!^>%tab%%tab%%tab%%tab%^( Scanning is& echo:%tab%%tab%%tab%%tab%%tab%throttled by Windows API^)&(for /f "tokens=2 delims=:" %%i in ('ipconfig ^| find /i "ipv4"') do ping -n 1 1.1.1.1 >NUL&&echo %tab%IP: [%%i], Able to ping to 1.1.1.1.)& goto picknext
+    if defined interfacename if "!interfacename!" NEQ "" echo interface ^<!interfacename!^>%tab%%tab%%tab%%tab%^( Scanning is%tab%%tab%%title_append%& echo:%tab%%tab%%tab%%tab%%tab%throttled by Windows API^)&(for /f "tokens=2 delims=:" %%i in ('ipconfig ^| find /i "ipv4"') do ping -n 1 1.1.1.1 >NUL&&echo %tab%IP: [%%i], Able to ping to 1.1.1.1.)& goto picknext
     call :colors  black yellow "scanning interfaces on this computer..."
     echo:
     echo:
@@ -272,7 +282,7 @@ for %%a in (%encrypt_value%) do set /a counter+=1&if !counter!==!val! set encryp
 if !encryptfound! NEQ 0 echo:No encryption found&call :no_encrypt
 
 echo|set/p=xxxx|choice /c 0 /d 0 /t 2 1>NUL 2>NUL
-choice /c AM /m "Choose mode:Auto|Manual:" /d M /t 3
+choice /c AM /m "Choose mode:Auto|Manual:" /d M /t 10
 if %errorlevel%==2 (set mode=manual) else (set mode=auto)
 echo:Chosen !mode!
 
@@ -381,13 +391,14 @@ echo |set /p=Do you want to attempt to connect using existing profile or create 
 choice /m "(C)reate Profile / (e)xisting Profile" /c ce
 if %errorlevel%==1 goto :no_profile_exists
 :connect_all_profiles
-echo:GETTING  ALL PROFILE FILES...
-powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $directoryPath -Filter \"*.xml\";foreach ($xmlFile in $xmlFiles) {  [xml]$xmlContent = Get-Content $xmlFile.FullName;$profileName = $xmlContent.WLANProfile.name;  write-host $profileName };">>"%tmp%\wifi_sign_profile_name.txt"
+echo:GETTING ALL PROFILE FILES...
+powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $directoryPath -Filter \"*.xml\";foreach ($xmlFile in $xmlFiles) {  [xml]$xmlContent = Get-Content $xmlFile.FullName;$profileName = $xmlContent.WLANProfile.name;  write-host $profileName };">"%tmp%\wifi_sign_profile_name.txt"
 set /a profile_counter=1
 :here222
-for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do echo:!profile_counter!^> %%i & CALL set "all-profiles[!profile_counter!]=%%i" & set /a profile_counter+=1
+echo off & for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do echo:[!profile_counter!] %%i & CALL set "all-profiles[!profile_counter!]=%%i" & set /a profile_counter+=1
 set /p choose-the-profile=Enter profile no.:
 CALL set "chosen_profile=%%all-profiles[!choose-the-profile!]%%"
+if "!chosen_profile!"=="" echo Invalid Profile Choice & timeout 2 >NUL  & goto start
 choice /m "profile:!chosen_profile!%tab% :would u like to connect to this?"
 if !errorlevel! == 1 netsh wlan connect name="!chosen_profile!" interface="!interfacename!" >NUL
 goto :start
