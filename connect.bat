@@ -5,14 +5,12 @@ if %errorlevel%==0 (
 ) else (
     set "title_append=^^^<^^^!^^^> Not running as Administrator"
 )
-if "%title_append%" NEQ "" echo|set /p=%title_append%  ANY COMMAND MAY NOT WORK ^^^!
-echo:
-echo|set/p=Close previous window/instances.....
-cmd /c "taskkill /fi "WINDOWTITLE eq xCsjKslaOp66666*"" >NUL&&echo|set/p=[ok]
-title xCsjKslaOp66666 
+title connect
+if "%title_append%" NEQ "" for /f "delims=" %%i in ('echo %title_append%  ANY COMMAND MAY NOT WORK ^^^!') do echo %%i
 setlocal enabledelayedexpansion
 for /f "delims=" %%i in ('powershell -c "write-host -nonewline `t"') do set "tab=%%i"
 set networks=0
+echo:Initializing..
 for /f "tokens=1,2 delims=:" %%i in ('netsh wlan show interfaces ^| findstr /iR "Name GUID"') do (
 set temp_name=%%i
 set temp_name=!temp_name: =!
@@ -76,6 +74,7 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
             (echo:!signal_strength_[%%a]!/!bssid_[%%a]!/"")>>"%tmp%\wifi_sign.txt"
         ) else (
             if "!signal_strength_[%%a]!"=="" set signal_strength_[%%a]=signal_is_not_available
+            if "!bssid_[%%a]!"=="" set bssid_[%%a]=N.A.
             (echo:!signal_strength_[%%a]!/!bssid_[%%a]!/"!ssid_[%%a]!")>>"%tmp%\wifi_sign.txt"
         )
 
@@ -106,7 +105,7 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     if %list_empty%==0 echo Select 1-9   
     if  "%~1" NEQ "" set "ssid_choice_without_qoute=DIGISOI" & goto :without_args
 
-    choice /c %choice_list%YXRDE /n /m "Or Press Y for (next page),(R) for list refresh"    
+    choice /c %choice_list%YXRDE /n /m "Or Press Y for (next page/relist),(R) for total refresh"    
     set choice=%errorlevel%
     if %list_empty%==1 if %choice%==2 netsh wlan disconnect interface="!interfacename!" &  goto :start
     if %list_empty%==1 if %choice%==3 echo refreshing ..&timeout 2 >NUL& start cmd /c "call "%~fp0"" & goto :eof
@@ -129,15 +128,13 @@ echo Guid==%guid_dir%
 if "!ssid_[%choice%]!"=="" call :hidden_ssid & goto :after_call_hidden_ssid
 for /f "delims=" %%i in ('echo:"GETTING PROFILE FILE for particular ssid:!ssid_choice_without_qoute!..."') do echo %%~i
 powershell -c "$directoryPath = \"%guid_dir%\";$xmlFiles = Get-ChildItem -Path $directoryPath -Filter \"*.xml\";foreach ($xmlFile in $xmlFiles) {  [xml]$xmlContent = Get-Content $xmlFile.FullName;$ssidName = $xmlContent.WLANProfile.SSIDConfig.SSID.name; $profileName = $xmlContent.WLANProfile.name; if ($ssidName -eq \"!ssid_choice_without_qoute!\") { Write-Host \"$profileName\" } };">"%tmp%\wifi_sign_profile_name.txt"
-
-
 set profile_exist=0
 for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do set profile_exist=1
 if !profile_exist! == 0 (call :no_profile_exists&goto :eof)
 if "%~1" NEQ "" (for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do echo netsh wlan connect name="%%i" ssid="!ssid_choice_without_qoute!" interface="!interfacename!" & netsh wlan connect name="%%i" ssid="!ssid_choice_without_qoute!" interface="!interfacename!" >NUL) & goto :eof
 for /f "tokens=*" %%i in ('type "%tmp%\wifi_sign_profile_name.txt"') do ( choice /m "profile:%%i %tab% :would u like to connect to this?" /c ynq
-if !errorlevel! == 3  
-if !errorlevel! == 1 netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL & call :checkerrorlevelwlanprofile)
+if !errorlevel! == 3  goto start
+if !errorlevel! == 1 netsh wlan connect name="%%i" ssid=!ssid_[%choice%]! interface="!interfacename!" >NUL & call :checkerrorlevelwlanprofile )
 goto after_call_hidden_ssid
 :checkerrorlevelwlanprofile
 if %errorlevel%==0 (echo: & call :colors black cyan "Done") else (echo: RAN ERROR & goto :nekst)
