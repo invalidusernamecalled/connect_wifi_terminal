@@ -10,6 +10,7 @@
 + Let apps access your location <b>ON</b>
 + Let desktop apps access your location <b>ON</b>
 + "Network Command Shell" location access needs be <b>ON</b>
++ Run as Administrator (Create shorcut and modify its Properties to "Always Run As Administrator")
 
 <SUP> Link - [Changes to Windows API impact network scanning request](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)
 
