@@ -1,11 +1,12 @@
-++++++-----<b>i</b>+n+<b>f</b>+o+<b>r</b>+m+<b>a</b>+t+<b>i</b>+o+<b>n</b>+s----++
- + this script may generate some files in the working folder
- + it is therefore recommended to host the script in a a separate folder
+Batch Script to List and Connect to Wi-Fi Networks.
 
-+++++++++++++++++++++++++++++++++++++++++++++++
-#### Troubleshooting Info
+> [!NOTE]
+> + this script may generate some files in the working folder
+> + it is therefore recommended to host the script in a a separate folder
 
-#### (for the Script to work):-
+#### Troubleshooting Section
+
+##### (for the Script to work):-
 + Windows location services need to be <b>ON</b>
 + Let apps access your location <b>ON</b>
 + Let desktop apps access your location <b>ON</b>
@@ -14,7 +15,7 @@
 
 <SUP> Link - [Changes to Windows API impact network scanning request](https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes)
 
-#### Details
+##### Details
 
 You might come accross the following (or similar) message when running a scan with the script.
 
