@@ -39,4 +39,4 @@ Goto  (Windows) Settings > Privacy & Security > Location<br>
 + Remember to keep the App "Network Command Shell" in the "On" position.
 + You may need to then right-click the script and "Run as administrator"
 
-Usually doing this once, resolves it forever. (Subsequent runs of the app don't require "Run as administrator")
+It is recommended to create a shortcut and edit its properties to "Always Run as Administrator"
