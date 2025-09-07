@@ -115,7 +115,7 @@ if !all_ears!==1 for /f "tokens=1 delims= " %%b in ("%%i") do if /i "%%b"=="stat
     if !choice!==10 if !escape!==0 (call :display_first_line & goto repat) else (set /a skip=0 &set corecount=9 & call :display_first_line & goto repat)
     echo:
     if %choice%==11 call :disconnect & pause >NUL & goto :start
-    if %choice%==12 echo refreshing ..&timeout 2 >NUL& start cmd /c "call "%~fp0"" & goto :eof
+    if %choice%==12 echo refreshing ..&timeout 2 >NUL& start cmd /c "call "%~fp0"" & exit
     if %choice%==13 call :re-connect & goto :start
     if %choice%==14 goto connect_all_profiles
 for /f "tokens=*" %%i in ("!ssid_[%choice%]!") do echo:you chose %%i&set ssid_[%choice%]="%%i"&set "ssid_choice_without_qoute=%%~i"
@@ -232,7 +232,8 @@ goto :eof
 :no_profile_exists
 echo No Profile Exists for this ssid.
 echo|set/p=Would u like to create it?
-choice /m "(c)reate profile, use (e)xisting profiles" /c ce
+choice /m "(c)reate profile, use (e)xisting profiles" /c ceq
+if %errorlevel%==3 goto start
 if %errorlevel%==2 goto connect_all_profiles
 :create_wlan_profile
 :enter_hidden_ssid
@@ -385,7 +386,8 @@ goto :eof
 :hidden_ssid
 call :colors black cyan "Wi-fi SSID is empty."
 echo |set /p=Do you want to attempt to connect using existing profile or create a new?
-choice /m "(C)reate Profile / (e)xisting Profile" /c ce
+choice /m "(C)reate Profile / (e)xisting Profile" /c ceq
+if %errorlevel%==3 goto start
 if %errorlevel%==1 goto :no_profile_exists
 :connect_all_profiles
 echo:GETTING ALL PROFILE FILES...
