@@ -1,8 +1,8 @@
 Batch Script to List and Connect to Wi-Fi Networks.
 
 > [!NOTE]
-> + this script may generate some files in the working folder
-> + it is therefore recommended to save the script in a a separate folder
+> + this script may generates some working files in the location it is saved at.
+> + it is therefore recommended to save the script in a a separate folder.
 
 #### Troubleshooting Section
 
