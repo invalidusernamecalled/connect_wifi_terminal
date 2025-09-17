@@ -20,7 +20,7 @@ for /f "tokens=1,2 delims=:" %%i in ('netsh wlan show interfaces ^| findstr /iR 
 set temp_name=%%i
 set temp_name=!temp_name: =!
 if /i "!temp_name!"=="Name" set /a networks+=1&for /f "tokens=* delims= " %%s in ("%%j") do set "name_[!networks!]=%%s"
-set guid_[!networks!]=
+REM set guid_[!networks!]=
 if /i "!temp_name!"=="GUID" for /f "tokens=* delims= " %%d in ("%%j") do set guid_[!networks!]=%%d
 )
 set total_network=!networks!
