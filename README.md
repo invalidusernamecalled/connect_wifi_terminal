@@ -1,3 +1,6 @@
+Stable versions-
+- `a76faea`bc3e75fd9804c54af778493878c3d6d6b
+
 Batch Script to List and Connect to Wi-Fi Networks.
 
 File Name- `connect.bat`
