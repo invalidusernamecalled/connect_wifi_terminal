@@ -1,5 +1,5 @@
 Stable versions-
-- `a76faea`bc3e75fd9804c54af778493878c3d6d6b
+- `0fd7a9b`e0d11a20eaad343e45bf7502c0ae7a71f
 
 Batch Script to List and Connect to Wi-Fi Networks.
 
